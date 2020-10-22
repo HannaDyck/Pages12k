@@ -21,6 +21,25 @@ library(palmoddata)
 library(rbacon)
 sessionInfo()
 
+# list of functions on Github ECUS that I should include to Pages2k script:
+
+# Package PALEOSPEC:
+# did work with PAT:
+# devtools::install_github("EarthSystemDiagnostics/paleospec",force=TRUE, auth_token= "50a272d0a2a6f8490fef6cad4aa01c7d43a90827")
+
+#
+# SpecInterpolate
+# MakeEquidistant
+# GetVarFromSpectra
+# FirstElement
+# ConfVar
+# ConfRatio
+
+# Package ECUSTOOLS:
+
+# GetDistance
+# statistical-functions
+
 
 # IMPORT and EXPORT of data ----------------------------------------------------------
 
@@ -50,74 +69,89 @@ load(file=paste0(path.data, "/Pages12k_TableOfProxys.RData"))
 # save(file=paste0(path.data, "/Proxys_2kversus12k.RData"), list="Proxys_2kversus12k")
 load(file=paste0(path.data, "/Proxys_2kversus12k.RData"))
 
-test<-Pages12k_Ts$paleoData_proxy
+# warum liefert das eine Liste, in der jeder Index dreimal vorkommt?!?:
 inds.proxy<-perspackage::Flatten(lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==alkenone"))
-
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==alkenone")
+inds.proxy<-Flatten(inds.proxy)
 
 # are there sites without site IDs? Is there a similar variable to the pages2k variable: paleoData_pages2kID?: maybe paleoData_pages12kID
 # does not work: sites.proxy<-which(sapply(inds.proxy,function(i) !is.null(Pages12k_Ts[[i]]$paleoData_pages12kID)))
 # inds.proxy<-inds.proxy[sites.proxy]
 
+# is this the way to gain insight to the dataset?
 structure<-str(Pages12k_Ts)
+
+# what is the time index variable? and what does it mean?
 Pages12k_Ts[[1]]$paleoData_datum
-age<-Pages12k_Ts[[1]]$age
+
+# example:
+age1<-Pages12k_Ts[[1]]$age
+age<-Pages12k_Ts[[2]]$age
+
+values1<-Pages12k_Ts[[1]]$paleoData_values
+values2<-Pages12k_Ts[[2]]$paleoData_values
 
 # Here I import the actually timeseries of MXD and proxy values and create zoo objects with them so they are easy to work with.
 # hier klappt es nicht so: zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$paleoData_datum))
-zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$age))
-
-#????? zoo::index(zser.proxy)
+# can't do this sorting of data: zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$age))
+# I tought I would do:
+# zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values))
+# but instead I do:
+zser.proxy<-Pages12k_Ts[inds.proxy]
 
 # Here I import the coordinates of the sites above
 coords.proxy<-t(sapply(inds.proxy,function(i) c(Pages12k_Ts[[i]]$geo_longitude,Pages12k_Ts[[i]]$geo_latitude)))
 
-plot(c(1:length(zser.proxy[[1]])),zser.proxy[[1]])
-plot(c(1:length(zser.proxy[[2]])),zser.proxy[[2]])
-plot(c(1:length(zser.proxy[[5]])),zser.proxy[[5]])
+# some examples:
+plot(zser.proxy[[1]]$age,zser.proxy[[1]]$paleoData_values)
+plot(zser.proxy[[30]]$age,zser.proxy[[30]]$paleoData_values)
+plot(zser.proxy[[150]]$age,zser.proxy[[150]]$paleoData_values)
+plot(zser.proxy[[230]]$age,zser.proxy[[230]]$paleoData_values)
+plot(zser.proxy[[300]]$age,zser.proxy[[300]]$paleoData_values)
 
-# Folgendes funktioniert nur für den Schnitt über die Zeitabschnitte, also bei gleichen Indixwerten der Zeitreihen:
+###################################################################################################
+# make time series equidistant:
 
+length(zser.proxy[[300]]$age)
+length(Flatten(zser.proxy[[300]]$age))
+class(Flatten(zser.proxy[[300]]$paleoData_values))
 
+age300<-Flatten(zser.proxy[[300]]$age)
+value300<-Flatten(zser.proxy[[300]]$paleoData_values)
 
-#----------------- Matrix with DIMENSION of  (length of intersection of observation periods) --------------------------------------
-#---------------------------------    times  (number of observation sites for a specific proxy)------------------------------------
+ts230<-MakeEquidistant(age300,value300 , dt = NULL, time.target = seq(from = age300[1],
+                                                       to = age300[length(age300)], by = 50), dt.hres = NULL, bFilter = TRUE,
+                k = 5, kf = 1.2, method.interpolation = "linear",
+                method.filter = 2)
 
-matrix.merge <-perspackage::merge.cutoff(zser.proxy)
+plot(ts230)
 
-save(file=paste0(path.results, "/TRW.matrix.merge.viafunction.RData"), list="matrix.merge")
+# not funtioning yet:
 
-load(file="/Users/hdyck/Desktop/R projects/Pages2k-ESDOF/results/TRW.RData")
-load(file="/Users/hdyck/Desktop/R projects/Pages2k-ESDOF/data/Pages2k_Ts.RData")
-load(file="/Users/hdyck/Desktop/R projects/Pages2k-ESDOF/results/TRWok.RData")
+zser.proxy[[1]]$age[1]
+class(zser.proxy[[1]]$age)
 
-################################################################################################################
-# -------------------- manuelle Korrektur für TRW:--------------------------------------------------
-
-index.ok <- (rowMeans(matrix.merge[[1]]) < 5 & !is.na(rowMeans(matrix.merge[[1]])))
-matrix.merge.ok <- matrix.merge[[1]][index.ok,]
-dim(matrix.merge.ok)
-coords.merge.ok <- coords.proxy[index.ok,]
-dim(coords.merge.ok)
-num.sites.ok <- length(matrix.merge.ok[,1])
-
-save(file=paste0(path.results, "/TRW.matrix.merge.ok.viafunction.RData"), list="matrix.merge.ok")
-
-load(file="/Users/hdyck/Desktop/R projects/Pages2k-ESDOF/results/TRW.matrix.merge.ok.RData")
-
-
-image(matrix.merge.ok-TRWok)
-
-################################################################################################################
-#--------------------- manuelle Korrektur für MXD:--------------------------------------------------------
+# what of the object is actually transferred to the function in sapply?:
+TsList<- sapply(c(1:length(zser.proxy)), function(i) MakeEquidistant(zser.proxy[[i]]$age,zser.proxy[[i]]$paleoData_values , 
+                                                        dt = NULL, time.target = seq(from = zser.proxy[[i]]$age[1],to = zser.proxy[[i]]$age[length(zser.proxy[[i]]$age)]), 
+                                                        dt.hres = NULL, bFilter = TRUE,
+                       k = 5, kf = 1.2, method.interpolation = "linear",
+                       method.filter = 2))
 
 
-index.ok <- (rowMeans(matrix.merge) < 1000
-             & !is.na(rowMeans(matrix.merge)))
-matrix.merge.ok <- matrix.merge[index.ok,]
-coords.merge.ok <- coords.proxy[index.ok,]
-dim(coords.merge.ok)
 
-image(matrix.merge.ok)
+
+TsList<- lapply( zser.proxy, function(i) MakeEquidistant(Flatten(zser.proxy[[i]]$age),Flatten(zser.proxy[[i]]$paleoData_values) , dt = NULL, time.target = seq(from = Flatten(zser.proxy[[i]]$age)[1],
+                                                                                                                                                               to = Flatten(zser.proxy[[i]]$age)[length(Flatten(zser.proxy[[i]]$age))], by = 50), dt.hres = NULL, bFilter = TRUE,
+                                                         k = 5, kf = 1.2, method.interpolation = "linear",
+                                                         method.filter = 2))
+
+
+# this is the original form of the function:
+MakeEquidistant(t.x, t.y, dt = NULL, time.target = seq(from = t.x[1],
+                                                       to = t.x[length(t.x)], by = dt), dt.hres = NULL, bFilter = TRUE,
+                k = 5, kf = 1.2, method.interpolation = "linear",
+                method.filter = 2)
 
 ################################################################################################################
 ############################ VARIANCES ###########################################################################
