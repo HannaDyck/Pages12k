@@ -12,7 +12,7 @@ library(zoo)
 library(rmarkdown)
 library(plyr)
 library(tidyverse)
-
+library(multitaper)
 library(perspackage)
 
 library(psem)
@@ -119,8 +119,8 @@ class(Flatten(zser.proxy[[300]]$paleoData_values))
 age300<-Flatten(zser.proxy[[300]]$age)
 value300<-Flatten(zser.proxy[[300]]$paleoData_values)
 
-ts230<-MakeEquidistant(age300,value300 , dt = NULL, time.target = seq(from = age300[1],
-                                                       to = age300[length(age300)], by = 50), dt.hres = NULL, bFilter = TRUE,
+ts230.20<-MakeEquidistant(age300,value300 , dt = NULL, time.target = seq(from = age300[1],
+                                                       to = age300[length(age300)]), dt.hres = NULL, bFilter = TRUE,
                 k = 5, kf = 1.2, method.interpolation = "linear",
                 method.filter = 2)
 
@@ -152,6 +152,27 @@ MakeEquidistant(t.x, t.y, dt = NULL, time.target = seq(from = t.x[1],
                                                        to = t.x[length(t.x)], by = dt), dt.hres = NULL, bFilter = TRUE,
                 k = 5, kf = 1.2, method.interpolation = "linear",
                 method.filter = 2)
+
+
+class(ts230)
+
+
+# just to control for equidistance:
+diff<- numeric(length(ts230))
+for (i in 2:length(ts230)){
+diff[i-1]<- index(ts230)[i]-index(ts230)[i-1]}
+
+diff<- numeric(length(ts230.20))
+for (i in 2:length(ts230.20)){
+  diff[i-1]<- index(ts230.20)[i]-index(ts230.20)[i-1]}
+
+  
+spec230<-SpecMTM(ts230, k = 3, nw = 2, nFFT = "default",
+                 centre = c("Slepian"), dpssIN = NULL, returnZeroFreq = FALSE,
+                 Ftest = FALSE, jackknife = FALSE, jkCIProb = 0.95,
+                 maxAdaptiveIterations = 100, plot = FALSE, na.action = na.fail,
+                 returnInternals = FALSE, detrend = TRUE, bPad = FALSE, ...)
+
 
 ################################################################################################################
 ############################ VARIANCES ###########################################################################
