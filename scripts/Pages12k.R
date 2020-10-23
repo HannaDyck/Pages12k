@@ -69,10 +69,63 @@ load(file=paste0(path.data, "/Pages12k_TableOfProxys.RData"))
 # save(file=paste0(path.data, "/Proxys_2kversus12k.RData"), list="Proxys_2kversus12k")
 load(file=paste0(path.data, "/Proxys_2kversus12k.RData"))
 
-# warum liefert das eine Liste, in der jeder Index dreimal vorkommt?!?:
-inds.proxy<-perspackage::Flatten(lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==alkenone"))
+archiveType<-lapply(Pages12k_Ts, function(i) i$archiveType)
+
+# marine proxys auswählen:
+# mar12.proxy<-perspackage::Flatten(lipdR::queryTs(Pages12k_Ts,"archiveType==MarineSediment"))
+# mar12.proxy<-Pages12k_Ts[mar12.proxy]
+# 
+# marine12k_TableOfProxys <- table.proxys(mar12.proxy)
+# 
+# save(file=paste0(path.data, "/marine12k_TableOfProxys.RData"), list="marine12k_TableOfProxys")
+load(file=paste0(path.data, "/marine12k_TableOfProxys.RData"))
+
+marine12k.mgca<-perspackage::Flatten(lipdR::queryTs(mar12.proxy,"paleoData_proxy==Mg/Ca"))
+marine12k.mgca<-Pages12k_Ts[marine12k.mgca]
+
+age1<-Flatten(marine12k.mgca[[1]]$age)
+value1<-Flatten(marine12k.mgca[[1]]$paleoData_values)
+
+ts1.20<-MakeEquidistant(age1,value1 , dt = NULL, time.target = seq(from = age300[1],
+                                                                         to = age300[length(age300)]), dt.hres = NULL, bFilter = TRUE,
+                          k = 5, kf = 1.2, method.interpolation = "linear",
+                          method.filter = 2)
+
+#### WTF!!!?!??! Was passiert hier: Grafiken vergleichen!
+plot(ts1.20)
+plot(marine12k.mgca[[1]]$age, marine12k.mgca[[1]]$paleoData_values)
+
+
+
+# maybe use:
+# archiveType "MarineSediment"
+# timeID
+# maxYear
+# minYear
+# nUniqueAges
+# nUniqueOtherAges
+# otherAgesPerKyr
+# agesPerKyr
+# ageUnits
+# nUniqueGoodAges
+
+
 inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==alkenone")
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==foraminifera")
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==Mg/Ca")
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==planktic foraminifera assemblage")
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==planktic foraminifera calcite")
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==delta18O")
+inds.proxy<-lipdR::queryTs(Pages12k_Ts,"paleoData_proxy==d18O")
+
 inds.proxy<-Flatten(inds.proxy)
+
+
+
+
+
+
+
 
 # are there sites without site IDs? Is there a similar variable to the pages2k variable: paleoData_pages2kID?: maybe paleoData_pages12kID
 # does not work: sites.proxy<-which(sapply(inds.proxy,function(i) !is.null(Pages12k_Ts[[i]]$paleoData_pages12kID)))
@@ -92,32 +145,35 @@ values1<-Pages12k_Ts[[1]]$paleoData_values
 values2<-Pages12k_Ts[[2]]$paleoData_values
 
 # Here I import the actually timeseries of MXD and proxy values and create zoo objects with them so they are easy to work with.
-# hier klappt es nicht so: zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$paleoData_datum))
-# can't do this sorting of data: zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$age))
+# hier klappt es nicht so: ser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$paleoData_datum))
+# can't do this sorting of data: ser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values,order.by = Pages12k_Ts[[i]]$age))
 # I tought I would do:
-# zser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values))
+# ser.proxy<-sapply(inds.proxy,function(i) zoo::zoo(Pages12k_Ts[[i]]$paleoData_values))
 # but instead I do:
-zser.proxy<-Pages12k_Ts[inds.proxy]
+ser.proxy<-Pages12k_Ts[inds.proxy]
+
+
+agesPerKyr<-lapply(ser.proxy, function(i) i$agesPerKyr)
 
 # Here I import the coordinates of the sites above
 coords.proxy<-t(sapply(inds.proxy,function(i) c(Pages12k_Ts[[i]]$geo_longitude,Pages12k_Ts[[i]]$geo_latitude)))
 
 # some examples:
-plot(zser.proxy[[1]]$age,zser.proxy[[1]]$paleoData_values)
-plot(zser.proxy[[30]]$age,zser.proxy[[30]]$paleoData_values)
-plot(zser.proxy[[150]]$age,zser.proxy[[150]]$paleoData_values)
-plot(zser.proxy[[230]]$age,zser.proxy[[230]]$paleoData_values)
-plot(zser.proxy[[300]]$age,zser.proxy[[300]]$paleoData_values)
+plot(ser.proxy[[1]]$age,ser.proxy[[1]]$paleoData_values)
+plot(ser.proxy[[30]]$age,ser.proxy[[30]]$paleoData_values)
+plot(ser.proxy[[150]]$age,ser.proxy[[150]]$paleoData_values)
+plot(ser.proxy[[230]]$age,ser.proxy[[230]]$paleoData_values)
+plot(ser.proxy[[300]]$age,ser.proxy[[300]]$paleoData_values)
 
 ###################################################################################################
 # make time series equidistant:
 
-length(zser.proxy[[300]]$age)
-length(Flatten(zser.proxy[[300]]$age))
-class(Flatten(zser.proxy[[300]]$paleoData_values))
+length(ser.proxy[[300]]$age)
+length(Flatten(ser.proxy[[300]]$age))
+class(Flatten(ser.proxy[[300]]$paleoData_values))
 
-age300<-Flatten(zser.proxy[[300]]$age)
-value300<-Flatten(zser.proxy[[300]]$paleoData_values)
+age300<-Flatten(ser.proxy[[300]]$age)
+value300<-Flatten(ser.proxy[[300]]$paleoData_values)
 
 ts230.20<-MakeEquidistant(age300,value300 , dt = NULL, time.target = seq(from = age300[1],
                                                        to = age300[length(age300)]), dt.hres = NULL, bFilter = TRUE,
@@ -126,14 +182,14 @@ ts230.20<-MakeEquidistant(age300,value300 , dt = NULL, time.target = seq(from = 
 
 plot(ts230)
 
-# not funtioning yet:
+# not functioning yet:
 
-zser.proxy[[1]]$age[1]
-class(zser.proxy[[1]]$age)
+ser.proxy[[1]]$age[1]
+class(ser.proxy[[1]]$age)
 
 # what of the object is actually transferred to the function in sapply?:
-TsList<- sapply(c(1:length(zser.proxy)), function(i) MakeEquidistant(zser.proxy[[i]]$age,zser.proxy[[i]]$paleoData_values , 
-                                                        dt = NULL, time.target = seq(from = zser.proxy[[i]]$age[1],to = zser.proxy[[i]]$age[length(zser.proxy[[i]]$age)]), 
+TsList<- sapply(c(1:length(ser.proxy)), function(i) MakeEquidistant(ser.proxy[[i]]$age,ser.proxy[[i]]$paleoData_values , 
+                                                        dt = NULL, time.target = seq(from = ser.proxy[[i]]$age[1],to = ser.proxy[[i]]$age[length(ser.proxy[[i]]$age)]), 
                                                         dt.hres = NULL, bFilter = TRUE,
                        k = 5, kf = 1.2, method.interpolation = "linear",
                        method.filter = 2))
@@ -141,8 +197,8 @@ TsList<- sapply(c(1:length(zser.proxy)), function(i) MakeEquidistant(zser.proxy[
 
 
 
-TsList<- lapply( zser.proxy, function(i) MakeEquidistant(Flatten(zser.proxy[[i]]$age),Flatten(zser.proxy[[i]]$paleoData_values) , dt = NULL, time.target = seq(from = Flatten(zser.proxy[[i]]$age)[1],
-                                                                                                                                                               to = Flatten(zser.proxy[[i]]$age)[length(Flatten(zser.proxy[[i]]$age))], by = 50), dt.hres = NULL, bFilter = TRUE,
+TsList<- lapply( ser.proxy, function(i) MakeEquidistant(Flatten(ser.proxy[[i]]$age),Flatten(ser.proxy[[i]]$paleoData_values) , dt = NULL, time.target = seq(from = Flatten(ser.proxy[[i]]$age)[1],
+                                                                                                                                                               to = Flatten(ser.proxy[[i]]$age)[length(Flatten(ser.proxy[[i]]$age))], by = 50), dt.hres = NULL, bFilter = TRUE,
                                                          k = 5, kf = 1.2, method.interpolation = "linear",
                                                          method.filter = 2))
 
