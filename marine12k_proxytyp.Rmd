@@ -1,0 +1,23 @@
+|proxy                            | Freq|
+|:--------------------------------|----:|
+|alkenone                         |   97|
+|benthic foraminifera calcite     |   22|
+|bulk sediment                    |   19|
+|d18O                             |  119|
+|diatom                           |   12|
+|dinocyst                         |   46|
+|fine fraction                    |    1|
+|foraminifera                     |   59|
+|GDGT                             |   15|
+|LDI                              |    1|
+|long chain diol                  |    1|
+|Mg/Ca                            |   83|
+|N. dutertrei                     |    1|
+|particle size                    |    1|
+|planktic foraminifera assemblage |    6|
+|planktic foraminifera calcite    |   50|
+|pollen                           |   44|
+|radiolaria                       |    1|
+|TEX86                            |    2|
+|TOC                              |    1|
+|Uk37Prime                        |    1|

@@ -59,7 +59,7 @@ load(file=paste0(path.data, "/Pages12k_Ts.RData"))
 # Pages12k_TableOfProxys <- table.proxys(Pages12k_Ts)
 # save(file=paste0(path.data, "/Pages12k_TableOfProxys.RData"), list="Pages12k_TableOfProxys")
 load(file=paste0(path.data, "/Pages12k_TableOfProxys.RData"))
-
+as.table(proxys)
 
 # Pages12k_TableOfProxys<-rename(Pages12k_TableOfProxys, Pages12k =Freq)
 # Pages2k_TableOfProxys<-rename(Pages2k_TableOfProxys, Pages2k =Freq)
@@ -80,21 +80,85 @@ archiveType<-lapply(Pages12k_Ts, function(i) i$archiveType)
 # save(file=paste0(path.data, "/marine12k_TableOfProxys.RData"), list="marine12k_TableOfProxys")
 load(file=paste0(path.data, "/marine12k_TableOfProxys.RData"))
 
+# table of proxys as pdf:
+# table<-kable(marine12k_TableOfProxys, format="markdown")
+# cat(table, sep="\n", file="marine12k_proxytyp.Rmd")
+# render("marine12k_proxytyp.Rmd",output_format = "pdf_document")
+
+
+
+
 marine12k.mgca<-perspackage::Flatten(lipdR::queryTs(mar12.proxy,"paleoData_proxy==Mg/Ca"))
 marine12k.mgca<-Pages12k_Ts[marine12k.mgca]
 
 age1<-Flatten(marine12k.mgca[[1]]$age)
 value1<-Flatten(marine12k.mgca[[1]]$paleoData_values)
 
-ts1.20<-MakeEquidistant(age1,value1 , dt = NULL, time.target = seq(from = age300[1],
-                                                                         to = age300[length(age300)]), dt.hres = NULL, bFilter = TRUE,
+age1.short<-age1[c(1:355)]
+value1.short<-value1[c(1:355)]
+
+ts1.short.NULL<-MakeEquidistant(age1.short,value1.short, dt = NULL, time.target = seq(from = age1.short[1],
+                                                                     to = age1.short[length(age1.short)]), dt.hres = NULL, bFilter = TRUE,
                           k = 5, kf = 1.2, method.interpolation = "linear",
                           method.filter = 2)
 
-#### WTF!!!?!??! Was passiert hier: Grafiken vergleichen!
-plot(ts1.20)
-plot(marine12k.mgca[[1]]$age, marine12k.mgca[[1]]$paleoData_values)
 
+ts1.NULL<-MakeEquidistant(age1,value1 , dt = NULL, time.target = seq(from = age1[1],
+                                                                         to = age1[length(age1)]), dt.hres = NULL, bFilter = TRUE,
+                          k = 5, kf = 1.2, method.interpolation = "linear",
+                          method.filter = 2)
+
+
+
+MakeEquidistant(t.x, t.y, dt = NULL, time.target = seq(from = t.x[1],
+                                                       to = t.x[length(t.x)], by = dt), dt.hres = NULL, bFilter = TRUE,
+                k = 5, kf = 1.2, method.interpolation = "linear",
+                method.filter = 2)
+
+#### WTF!!!?!??! Was passiert hier: Grafiken vergleichen!
+# irgendwie verwenden:
+# p2 <- data %>%  ggplot(aes(x=V3, y=V2, size = V1)) +
+#   borders() +
+#   #  annotation_map(map_data("world"), fill = NA, colour = "grey50")+
+#   #  geom_point(alpha=0.7) +
+#   geom_point(aes(colour = V1)) +
+#   #  scale_size(range = c(0, 15)) +
+#   scale_colour_stepsn(colours = terrain.colors(10))+
+#   theme_ipsum() +
+#   theme(legend.position="right")+
+#   # labs(title= paste("Spectra of Frequency Interval ", 1,"/", end.date.merge -begin.date.merge, "to",5,"/", end.date.merge -begin.date.merge),
+#   #      subtitle= "Tree ring width data", colour="Spectra") +
+#   labs(subtitle= paste("Spectra of Frequency Interval circa [ 1/290years , 1/60years ], Time series from", begin.date.merge, "to" ,end.date.merge),
+#        title= "Maximum Latewood Density", colour="Spectra") +
+#   xlab("") +
+#   ylab("")
+
+
+
+plot(ts1.NULL,ylab="proxy values", xlab="age")
+plot(ts1.short.NULL,ylab="proxy values", xlab="age")
+
+plot(ts30.NULL,ylab="proxy values", xlab="age")
+plot(ts70.NULL,ylab="proxy values", xlab="age")
+
+info<- c(c("geo_siteName",marine12k.mgca[[1]]$geo_siteName),c("geo_longitude",marine12k.mgca[[1]]$geo_longitude),c("geo_latitude",marine12k.mgca[[1]]$geo_latitude),
+c("geo_elevation",marine12k.mgca[[1]]$geo_elevation),c("geo_gcmdLocation",marine12k.mgca[[1]]$geo_gcmdLocation))
+
+info<- c(c("geo_siteName",marine12k.mgca[[70]]$geo_siteName),c("geo_longitude",marine12k.mgca[[70]]$geo_longitude),c("geo_latitude",marine12k.mgca[[70]]$geo_latitude),
+         c("geo_elevation",marine12k.mgca[[70]]$geo_elevation),c("geo_gcmdLocation",marine12k.mgca[[70]]$geo_gcmdLocation))
+
+
+plot(marine12k.mgca[[1]]$age, marine12k.mgca[[1]]$paleoData_values, ylab="proxy values", xlab="age")
+plot(marine12k.mgca[[30]]$age, marine12k.mgca[[30]]$paleoData_values, ylab="proxy values", xlab="age")
+plot(marine12k.mgca[[70]]$age, marine12k.mgca[[70]]$paleoData_values, ylab="proxy values", xlab="age")
+
+structure(marine12k.mgca[[70]])
+
+spec.ts1.20<-SpecMTM(ts1.20, k = 3, nw = 2, nFFT = "default",
+                 centre = c("Slepian"), dpssIN = NULL, returnZeroFreq = FALSE,
+                 Ftest = FALSE, jackknife = FALSE, jkCIProb = 0.95,
+                 maxAdaptiveIterations = 100, plot = FALSE, na.action = na.fail,
+                 returnInternals = FALSE, detrend = TRUE, bPad = FALSE, ...)
 
 
 # maybe use:
